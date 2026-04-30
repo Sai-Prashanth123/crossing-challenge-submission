@@ -179,7 +179,7 @@ def main(quick=False):
 
     batch = 256
     train_loader = DataLoader(train_ds, batch_size=batch, shuffle=True,
-                              num_workers=0, drop_last=True)
+                              num_workers=0, drop_last=not quick)
     dev_loader = DataLoader(dev_ds, batch_size=batch, shuffle=False,
                             num_workers=0)
 
