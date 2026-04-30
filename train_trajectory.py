@@ -107,7 +107,7 @@ class CrossingSequenceDataset(Dataset):
 # ============================================================================
 
 class TrajectoryGRU(nn.Module):
-    def __init__(self, input_dim=8, hidden=64, num_layers=2, dropout=0.1):
+    def __init__(self, input_dim=8, hidden=128, num_layers=2, dropout=0.1):
         super().__init__()
         self.input_proj = nn.Linear(input_dim, hidden)
         self.gru = nn.GRU(
@@ -173,7 +173,7 @@ def main(quick=False):
 
     print("Building datasets...")
     t0 = time.time()
-    train_ds = CrossingSequenceDataset(train_df, augment_ego=True)
+    train_ds = CrossingSequenceDataset(train_df, augment_ego=False)
     dev_ds = CrossingSequenceDataset(dev_df, augment_ego=False)
     print(f"  {time.time() - t0:.1f}s")
 
@@ -187,14 +187,14 @@ def main(quick=False):
     n_params = sum(p.numel() for p in model.parameters())
     print(f"Model params: {n_params:,}")
 
-    epochs = 3 if quick else 50
+    epochs = 3 if quick else 75
     base_lr = 1e-3
     steps_per_epoch = max(1, len(train_loader))
     warmup = steps_per_epoch * 5
     total_steps = steps_per_epoch * epochs
 
     opt = torch.optim.AdamW(model.parameters(), lr=base_lr, weight_decay=1e-4)
-    loss_fn = nn.MSELoss()
+    loss_fn = nn.SmoothL1Loss(beta=0.005)
 
     best_ade = float("inf")
     best_state = None
@@ -240,7 +240,7 @@ def main(quick=False):
 
     torch.save({
         "state_dict": best_state,
-        "hparams": {"input_dim": 8, "hidden": 64, "num_layers": 2,
+        "hparams": {"input_dim": 8, "hidden": 128, "num_layers": 2,
                     "dropout": 0.1},
         "best_ade": best_ade,
     }, OUT)
